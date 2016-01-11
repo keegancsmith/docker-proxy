@@ -5,4 +5,4 @@
 docker: .bin/docker-proxy
 	docker build -t keegancsmith/docker-proxy .
 
-.PHONY: docker
+.PHONY: docker test
