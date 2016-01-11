@@ -1,4 +1,4 @@
-= docker-proxy
+# docker-proxy
 
 Proxy to expose the docker unix socket over tcp. Run this with docker
 
