@@ -61,3 +61,29 @@ func TestGetOrGenerateServerCert(t *testing.T) {
 		t.Error("getOrGenerateServerCert was not idempotent")
 	}
 }
+
+func TestGetOrGenerateClientCert(t *testing.T) {
+	certPath, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { os.RemoveAll(certPath) }()
+
+	c, err := getOrGenerateClientCert(certPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = c.TLSConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	c2, err := getOrGenerateClientCert(certPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(c, c2) {
+		t.Error("getOrGenerateClientCert was not idempotent")
+	}
+}

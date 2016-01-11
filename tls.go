@@ -2,6 +2,8 @@ package proxy
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -81,6 +83,55 @@ func getOrGenerateServerCert(certPath string, hosts []string) (TLSConfig, error)
 	}
 	log.Printf("Generated server certs %v for hosts %v", []string{serverCertPath, serverKeyPath}, hosts)
 	c := serverCerts{caCert, serverCert, serverKey}
+	return &c, nil
+}
+
+type clientCerts struct {
+	ca, cert, key []byte
+}
+
+func (c *clientCerts) TLSConfig() (*tls.Config, error) {
+	tlsCert, err := tls.X509KeyPair(c.cert, c.key)
+	if err != nil {
+		return nil, err
+	}
+	tlsConfig := &tls.Config{Certificates: []tls.Certificate{tlsCert}}
+	tlsConfig.RootCAs = x509.NewCertPool()
+	if !tlsConfig.RootCAs.AppendCertsFromPEM(c.ca) {
+		return nil, errors.New("Could not add RootCA pem")
+	}
+	return tlsConfig, nil
+}
+
+func getOrGenerateClientCert(certPath string) (TLSConfig, error) {
+	clientCertPath := filepath.Join(certPath, "cert.pem")
+	clientKeyPath := filepath.Join(certPath, "key.pem")
+
+	caCert, caKey, err := getOrGenerateCA(certPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if contents, err := loadAllFiles(clientCertPath, clientKeyPath); err == nil {
+		c := clientCerts{caCert, contents[0], contents[1]}
+		return &c, nil
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	clientCert, clientKey, err := tlsutils.GenerateCertificate(nil, caCert, caKey, certOrg, "", certBits)
+	if err != nil {
+		return nil, err
+	}
+	err = writeAllFiles(map[string][]byte{
+		clientCertPath: clientCert,
+		clientKeyPath:  clientKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Generated client certs %v", []string{clientCertPath, clientKeyPath})
+	c := clientCerts{caCert, clientCert, clientKey}
 	return &c, nil
 }
 

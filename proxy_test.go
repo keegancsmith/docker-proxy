@@ -38,8 +38,16 @@ func TestUnixSocketTLSReverseProxy(t *testing.T) {
 		return ts
 	}
 
+	clientCert, err := getOrGenerateClientCert(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clientTLSConfig, err := clientCert.TLSConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
 	httpTransport := &http.Transport{
-		TLSClientConfig: tlsConfig,
+		TLSClientConfig: clientTLSConfig,
 	}
 	client := http.Client{Transport: httpTransport}
 
