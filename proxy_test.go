@@ -18,18 +18,12 @@ func TestUnixSocketReverseProxy(t *testing.T) {
 	}
 	defer func() { os.RemoveAll(dir) }()
 
-	// Setup an actual HTTP Handler on a unix socket
 	sockPath := filepath.Join(dir, "docker.sock")
-	l, err := net.Listen("unix", sockPath)
+	cleanup, err := serveUnixHandler(sockPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer l.Close()
-	mux := http.NewServeMux()
-	mux.HandleFunc("/helloworld", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(w, "Hello World")
-	})
-	go http.Serve(l, mux)
+	defer cleanup()
 
 	// Then setup proxy and see if we successfully connect to the socket
 	proxy := UnixSocketReverseProxy(sockPath)
@@ -56,4 +50,18 @@ func TestUnixSocketReverseProxy(t *testing.T) {
 	if string(greeting) != "Hello World" {
 		t.Fatal("Response body not Hello World", string(greeting))
 	}
+}
+
+func serveUnixHandler(sockPath string) (func(), error) {
+	// Setup an actual HTTP Handler on a unix socket
+	l, err := net.Listen("unix", sockPath)
+	if err != nil {
+		return nil, err
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/helloworld", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintf(w, "Hello World")
+	})
+	go http.Serve(l, mux)
+	return func() { l.Close() }, nil
 }
