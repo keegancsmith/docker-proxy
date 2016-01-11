@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"crypto/tls"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,6 +14,10 @@ var (
 	certOrg  = "unknown"
 	certBits = 2048
 )
+
+type TLSConfig interface {
+	TLSConfig() (*tls.Config, error)
+}
 
 func getOrGenerateCA(certPath string) ([]byte, []byte, error) {
 	caCertPath := filepath.Join(certPath, "ca.pem")
@@ -37,6 +42,46 @@ func getOrGenerateCA(certPath string) ([]byte, []byte, error) {
 	}
 	log.Printf("Generated CA certs %v", []string{caCertPath, caKeyPath})
 	return caCert, caKey, err
+}
+
+type serverCerts struct {
+	caCert, serverCert, serverKey []byte
+}
+
+func (s *serverCerts) TLSConfig() (*tls.Config, error) {
+	return tlsutils.GetServerTLSConfig(s.caCert, s.serverCert, s.serverKey, false)
+}
+
+func getOrGenerateServerCert(certPath string, hosts []string) (TLSConfig, error) {
+	serverCertPath := filepath.Join(certPath, "server.pem")
+	serverKeyPath := filepath.Join(certPath, "server-key.pem")
+
+	caCert, caKey, err := getOrGenerateCA(certPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if contents, err := loadAllFiles(serverCertPath, serverKeyPath); err == nil {
+		c := serverCerts{caCert, contents[0], contents[1]}
+		return &c, nil
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	serverCert, serverKey, err := tlsutils.GenerateCertificate(hosts, caCert, caKey, certOrg, "", certBits)
+	if err != nil {
+		return nil, err
+	}
+	err = writeAllFiles(map[string][]byte{
+		serverCertPath: serverCert,
+		serverKeyPath:  serverKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Generated server certs %v for hosts %v", []string{serverCertPath, serverKeyPath}, hosts)
+	c := serverCerts{caCert, serverCert, serverKey}
+	return &c, nil
 }
 
 func loadAllFiles(paths ...string) ([][]byte, error) {
