@@ -1,7 +1,8 @@
-docker-proxy: $(wildcard *.go)
-	GOOS=linux GOARCH=amd64 go build -o docker-proxy .
+.bin/docker-proxy: $(wildcard *.go)
+	@mkdir .bin
+	GOOS=linux GOARCH=amd64 go build -o .bin/docker-proxy .
 
-docker: docker-proxy
+docker: .bin/docker-proxy
 	docker build -t keegancsmith/docker-proxy .
 
 .PHONY: docker

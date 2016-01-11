@@ -1,2 +1,2 @@
 *.test
-docker-proxy
+.bin

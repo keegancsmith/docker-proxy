@@ -1,6 +1,6 @@
 FROM alpine:3.3
 
-ADD docker-proxy /usr/local/bin/docker-proxy
+ADD .bin/docker-proxy /usr/local/bin/docker-proxy
 
 ENTRYPOINT ["docker-proxy"]
 
