@@ -1,5 +1,5 @@
 .bin/docker-proxy: $(wildcard *.go)
-	@mkdir .bin
+	@mkdir -p .bin
 	GOOS=linux GOARCH=amd64 go build -o .bin/docker-proxy .
 
 docker: .bin/docker-proxy
