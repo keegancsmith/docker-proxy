@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"net/http"
+	"regexp"
 )
 
 func main() {
@@ -14,8 +16,13 @@ func main() {
 	flag.StringVar(&sockPath, "sockpath", "/var/run/docker.sock", "The path to the docker unix socket")
 	flag.StringVar(&certPath, "certpath", "/certs", "Where to find or generate $DOCKER_CERT_PATH compatible certificates")
 	flag.Parse()
-	hosts := flag.Args()
-	hosts = append(hosts, "127.0.0.1")
+	suppliedHosts := flag.Args()
+
+	hosts, err := ipsFromInterfaces()
+	if err != nil {
+		log.Fatal(err)
+	}
+	hosts = append(hosts, suppliedHosts...)
 
 	serverCert, err := getOrGenerateServerCert(certPath, hosts)
 	if err != nil {
@@ -39,4 +46,27 @@ func main() {
 		TLSConfig: tlsConfig,
 	}
 	log.Fatal(server.ListenAndServeTLS("", ""))
+}
+
+func ipsFromInterfaces() ([]string, error) {
+	ipRegexp := regexp.MustCompile(`[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}`)
+	ifts, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	ips := []string{}
+	for _, ift := range ifts {
+		addrs, err := ift.Addrs()
+		if err != nil {
+			return nil, err
+		}
+		for _, addr := range addrs {
+			if addr.Network() == "ip+net" {
+				if match := ipRegexp.FindString(addr.String()); match != "" {
+					ips = append(ips, match)
+				}
+			}
+		}
+	}
+	return ips, nil
 }
