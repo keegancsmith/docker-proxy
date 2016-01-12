@@ -17,6 +17,7 @@ func main() {
 	)
 	flag.StringVar(&sockPath, "sockpath", "/var/run/docker.sock", "The path to the docker unix socket")
 	flag.StringVar(&certPath, "certpath", "/certs", "Where to find or generate $DOCKER_CERT_PATH compatible certificates")
+	flag.BoolVar(&dproxy.EphemeralGen, "ephemeral", true, "If false, generated certs will be saved to certpath")
 	flag.Parse()
 	suppliedHosts := flag.Args()
 

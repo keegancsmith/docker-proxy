@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	certOrg  = "unknown"
-	certBits = 2048
+	EphemeralGen = false
+	certOrg      = "unknown"
+	certBits     = 2048
 )
 
 type TLSConfig interface {
@@ -35,6 +36,11 @@ func GetOrGenerateCA(certPath string) ([]byte, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	if EphemeralGen {
+		log.Printf("Generated ephemeral CA certs")
+		return caCert, caKey, nil
+	}
+
 	err = writeAllFiles(map[string][]byte{
 		caCertPath: caCert,
 		caKeyPath:  caKey,
@@ -43,7 +49,7 @@ func GetOrGenerateCA(certPath string) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 	log.Printf("Generated CA certs %v", []string{caCertPath, caKeyPath})
-	return caCert, caKey, err
+	return caCert, caKey, nil
 }
 
 type serverCerts struct {
@@ -74,6 +80,12 @@ func GetOrGenerateServerCert(certPath string, hosts []string) (TLSConfig, error)
 	if err != nil {
 		return nil, err
 	}
+	c := &serverCerts{caCert, serverCert, serverKey}
+	if EphemeralGen {
+		log.Printf("Generated ephemeral server certs")
+		return c, nil
+	}
+
 	err = writeAllFiles(map[string][]byte{
 		serverCertPath: serverCert,
 		serverKeyPath:  serverKey,
@@ -82,8 +94,7 @@ func GetOrGenerateServerCert(certPath string, hosts []string) (TLSConfig, error)
 		return nil, err
 	}
 	log.Printf("Generated server certs %v for hosts %v", []string{serverCertPath, serverKeyPath}, hosts)
-	c := serverCerts{caCert, serverCert, serverKey}
-	return &c, nil
+	return c, nil
 }
 
 type clientCerts struct {
@@ -123,6 +134,12 @@ func GetOrGenerateClientCert(certPath string) (TLSConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	c := &clientCerts{caCert, clientCert, clientKey}
+	if EphemeralGen {
+		log.Printf("Generated ephemeral client certs")
+		return c, nil
+	}
+
 	err = writeAllFiles(map[string][]byte{
 		clientCertPath: clientCert,
 		clientKeyPath:  clientKey,
@@ -131,8 +148,7 @@ func GetOrGenerateClientCert(certPath string) (TLSConfig, error) {
 		return nil, err
 	}
 	log.Printf("Generated client certs %v", []string{clientCertPath, clientKeyPath})
-	c := clientCerts{caCert, clientCert, clientKey}
-	return &c, nil
+	return c, nil
 }
 
 func loadAllFiles(paths ...string) ([][]byte, error) {
