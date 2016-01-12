@@ -35,12 +35,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Generate client certs so the user can use them from the bindmount
-	_, err = dproxy.GetOrGenerateClientCert(certPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	proxy := dproxy.UnixSocketReverseProxy(sockPath)
 	server := &http.Server{
 		Addr:      ":2376",
