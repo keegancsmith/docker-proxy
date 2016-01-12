@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"io/ioutil"
@@ -19,20 +19,20 @@ func TestGetOrGenerateCA(t *testing.T) {
 	}
 	defer func() { os.RemoveAll(certPath) }()
 
-	caCert, caKey, err := getOrGenerateCA(certPath)
+	caCert, caKey, err := GetOrGenerateCA(certPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	caCert1, caKey1, err := getOrGenerateCA(certPath)
+	caCert1, caKey1, err := GetOrGenerateCA(certPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(caCert, caCert1) {
-		t.Error("getOrGenerateCA was not idempotent for caCert")
+		t.Error("GetOrGenerateCA was not idempotent for caCert")
 	}
 	if !reflect.DeepEqual(caKey, caKey1) {
-		t.Error("getOrGenerateCA was not idempotent for caKey")
+		t.Error("GetOrGenerateCA was not idempotent for caKey")
 	}
 }
 
@@ -43,7 +43,7 @@ func TestGetOrGenerateServerCert(t *testing.T) {
 	}
 	defer func() { os.RemoveAll(certPath) }()
 
-	c, err := getOrGenerateServerCert(certPath, []string{"127.0.0.1"})
+	c, err := GetOrGenerateServerCert(certPath, []string{"127.0.0.1"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,12 +53,12 @@ func TestGetOrGenerateServerCert(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c2, err := getOrGenerateServerCert(certPath, []string{"127.0.0.1"})
+	c2, err := GetOrGenerateServerCert(certPath, []string{"127.0.0.1"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(c, c2) {
-		t.Error("getOrGenerateServerCert was not idempotent")
+		t.Error("GetOrGenerateServerCert was not idempotent")
 	}
 }
 
@@ -69,7 +69,7 @@ func TestGetOrGenerateClientCert(t *testing.T) {
 	}
 	defer func() { os.RemoveAll(certPath) }()
 
-	c, err := getOrGenerateClientCert(certPath)
+	c, err := GetOrGenerateClientCert(certPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,11 +79,11 @@ func TestGetOrGenerateClientCert(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c2, err := getOrGenerateClientCert(certPath)
+	c2, err := GetOrGenerateClientCert(certPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(c, c2) {
-		t.Error("getOrGenerateClientCert was not idempotent")
+		t.Error("GetOrGenerateClientCert was not idempotent")
 	}
 }

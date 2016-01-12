@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"crypto/tls"
@@ -21,7 +21,7 @@ type TLSConfig interface {
 	TLSConfig() (*tls.Config, error)
 }
 
-func getOrGenerateCA(certPath string) ([]byte, []byte, error) {
+func GetOrGenerateCA(certPath string) ([]byte, []byte, error) {
 	caCertPath := filepath.Join(certPath, "ca.pem")
 	caKeyPath := filepath.Join(certPath, "ca-key.pem")
 
@@ -54,11 +54,11 @@ func (s *serverCerts) TLSConfig() (*tls.Config, error) {
 	return tlsutils.GetServerTLSConfig(s.caCert, s.serverCert, s.serverKey, false)
 }
 
-func getOrGenerateServerCert(certPath string, hosts []string) (TLSConfig, error) {
+func GetOrGenerateServerCert(certPath string, hosts []string) (TLSConfig, error) {
 	serverCertPath := filepath.Join(certPath, "server.pem")
 	serverKeyPath := filepath.Join(certPath, "server-key.pem")
 
-	caCert, caKey, err := getOrGenerateCA(certPath)
+	caCert, caKey, err := GetOrGenerateCA(certPath)
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +103,11 @@ func (c *clientCerts) TLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func getOrGenerateClientCert(certPath string) (TLSConfig, error) {
+func GetOrGenerateClientCert(certPath string) (TLSConfig, error) {
 	clientCertPath := filepath.Join(certPath, "cert.pem")
 	clientKeyPath := filepath.Join(certPath, "key.pem")
 
-	caCert, caKey, err := getOrGenerateCA(certPath)
+	caCert, caKey, err := GetOrGenerateCA(certPath)
 	if err != nil {
 		return nil, err
 	}

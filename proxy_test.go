@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func TestUnixSocketTLSReverseProxy(t *testing.T) {
 	}
 	defer func() { os.RemoveAll(dir) }()
 
-	serverCert, err := getOrGenerateServerCert(dir, []string{"127.0.0.1"})
+	serverCert, err := GetOrGenerateServerCert(dir, []string{"127.0.0.1"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestUnixSocketTLSReverseProxy(t *testing.T) {
 		return ts
 	}
 
-	clientCert, err := getOrGenerateClientCert(dir)
+	clientCert, err := GetOrGenerateClientCert(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

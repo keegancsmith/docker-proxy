@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+
+	dproxy "github.com/keegancsmith/docker-proxy"
 )
 
 func main() {
@@ -24,7 +26,7 @@ func main() {
 	}
 	hosts = append(hosts, suppliedHosts...)
 
-	serverCert, err := getOrGenerateServerCert(certPath, hosts)
+	serverCert, err := dproxy.GetOrGenerateServerCert(certPath, hosts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,12 +36,12 @@ func main() {
 	}
 
 	// Generate client certs so the user can use them from the bindmount
-	_, err = getOrGenerateClientCert(certPath)
+	_, err = dproxy.GetOrGenerateClientCert(certPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	proxy := UnixSocketReverseProxy(sockPath)
+	proxy := dproxy.UnixSocketReverseProxy(sockPath)
 	server := &http.Server{
 		Addr:      ":2376",
 		Handler:   proxy,
